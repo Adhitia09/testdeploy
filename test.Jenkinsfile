@@ -36,13 +36,15 @@ pipeline {
         stage ('push') {
             steps {
                 dir("source") {
-                    withCredentials([usernamePassword(credentialsId: 'docker-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD' , variable: 'token')]){
-                        tokenDocker = token
-                        sh "docker login docker.io --token=${tokenDocker}"
-                    }
-                    sh "sleep 60"
-                    withCredentials([usernamePassword(credentialsId: 'quay-dc-credential', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]){
-                        sh "skopeo copy --remove-signatures  --src-creds=jenkins:${tokenLocal} --src-tls-verify=false docker://${intRegistryDev}/${projectName}/${appName}:latest docker://${extRegistryQuayDC}/djbc/${projectName}_${appName}-dev:latest --dest-creds \${USERNAME}:\${PASSWORD} --dest-tls-verify=false"
+                    script {
+                        withCredentials([usernamePassword(credentialsId: 'docker-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD' , variable: 'token')]){
+                            tokenDocker = token
+                            sh "docker login docker.io --token=${tokenDocker}"
+                        }
+                        sh "sleep 60"
+                        withCredentials([usernamePassword(credentialsId: 'quay-dc-credential', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]){
+                            sh "skopeo copy --remove-signatures  --src-creds=jenkins:${tokenLocal} --src-tls-verify=false docker://${intRegistryDev}/${projectName}/${appName}:latest docker://${extRegistryQuayDC}/djbc/${projectName}_${appName}-dev:latest --dest-creds \${USERNAME}:\${PASSWORD} --dest-tls-verify=false"
+                        }   
                     }
                 }
             }
