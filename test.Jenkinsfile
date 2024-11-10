@@ -28,7 +28,7 @@ node('maven') {
             
             withCredentials([usernamePassword(credentialsId: 'docker-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]){
                 sh "set +x"
-                sh "docker login docker.io"
+                sh "podman login docker.io"
             }
         }
     }
