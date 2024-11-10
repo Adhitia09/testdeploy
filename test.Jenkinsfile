@@ -32,7 +32,7 @@ node('maven') {
             withCredentials([usernamePassword(credentialsId: 'docker-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]){
                 sh "set +x"
                 sh "skopeo login --username=adhitia09 --password=Gumelar09!! docker.io"
-                sh "skopeo copy --remove-signatures --src-creds=jenkins:${tokenLocal} --src-tls-verify=false docker://senaturana/plato:latest docker://${extRegistryQuayDRC}/djbc/plato:latest --dest-creds \${USERNAME}:\${PASSWORD} --dest-tls-verify=false"
+                sh "skopeo copy --remove-signatures --src-creds=jenkins:${tokenLocal} --src-tls-verify=false docker://adhitia09/app-nginx:1.0 docker://${extRegistryQuayDRC}/djbc/app-nginx:1.0 --dest-creds \${USERNAME}:\${PASSWORD} --dest-tls-verify=false"
             }
         }
     }
