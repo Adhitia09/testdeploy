@@ -37,9 +37,8 @@ pipeline {
             steps {
                 dir("source") {
                     script {
-                        withCredentials([string(credentialsId: 'docker-credentials', variable: 'token')]){
-                            tokenDocker = token
-                            sh "docker login docker.io --token=${tokenDocker}"
+                        withCredentials([usernamePassword(credentialsId: 'docker-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]){
+                            sh "docker login docker.io"
                         }
                         sh "sleep 60"
                         withCredentials([usernamePassword(credentialsId: 'quay-dc-credential', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]){
