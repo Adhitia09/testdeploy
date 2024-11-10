@@ -31,7 +31,8 @@ node('maven') {
             def tokenLocal = sh(script: 'oc whoami -t', returnStdout: true).trim()
             withCredentials([usernamePassword(credentialsId: 'docker-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]){
                 sh "set +x"
-                sh "skopeo copy --remove-signatures --src-creds=jenkins:${tokenLocal} --src-tls-verify=false docker://senaturana/plato:latest docker://${extRegistryQuayDC}/djbc/${projectName}_${appName}-prod:latest --dest-creds \${USERNAME}:\${PASSWORD} --dest-tls-verify=false"
+                sh "skopeo login --username=USERNAME --password=PASSWORD docker.io"
+                sh "skopeo copy --remove-signatures --src-creds=jenkins:${tokenLocal} --src-tls-verify=false docker://senaturana/plato:latest docker://${extRegistryQuayDRC}/djbc/plato:latest --dest-creds \${USERNAME}:\${PASSWORD} --dest-tls-verify=false"
             }
         }
     }
