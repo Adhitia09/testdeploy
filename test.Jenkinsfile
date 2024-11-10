@@ -30,8 +30,8 @@ node('maven') {
         dir("source") {
             def tokenLocal = sh(script: 'oc whoami -t', returnStdout: true).trim()
             
-            withCredentials([usernamePassword(credentialsId: 'quay-drc-credential', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]){
-                sh "skopeo copy docker://adhitia09/app-nginx:1.0 docker://${extRegistryQuayDRC}/djbc/app-nginx:1.0 --dest-creds \${USERNAME}:\${PASSWORD} --dest-tls-verify=false"
+            withCredentials([usernamePassword(credentialsId: 'quay-dc-credential', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]){
+                sh "skopeo copy docker://adhitia09/app-nginx:1.0 docker://${extRegistryQuayDC}/djbc/app-nginx:1.0 --dest-creds \${USERNAME}:\${PASSWORD} --dest-tls-verify=false"
             }
         }
     }
