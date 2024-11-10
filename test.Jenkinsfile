@@ -5,6 +5,9 @@ node('maven') {
     def projectName="test"
     def repoUrl="github.com/Adhitia09/testdeploy.git"
     def branchName="main"
+    def extRegistryQuayDC="quay-registry.apps.proddc.customs.go.id"
+    def extRegistryQuayDRC="quay-registry.apps.proddrc.customs.go.id"
+
 
     stage ('Git Clone') {
         sh "git config --global http.sslVerify false"
