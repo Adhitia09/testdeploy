@@ -1,41 +1,84 @@
+pipeline {
+    agent any
 
-node('maven') {
+    environment {
+        pullImageDC = "quayuser-djbc-dc-pull-secret"
+        pullImageDRC = "quayuser-djbc-drc-pull-secret"
 
-    def appName="test"
-    def projectName="test"
-    def repoUrl="github.com/Adhitia09/testdeploy.git"
-    def branchName="main"
-    def extRegistryQuayDC="quay-registry.apps.proddc.customs.go.id"
-    def extRegistryQuayDRC="quay-registry.apps.proddrc.customs.go.id"
-
-
-    stage ('Git Clone') {
-        sh "git config --global http.sslVerify false"
-        withCredentials([usernamePassword(credentialsId: 'customs-gitlab-credential', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-            sh "git clone https://\${USERNAME}:\${PASSWORD}@${repoUrl} source "
-        }
-    }
-    
-    stage ('App Build') {
-        dir("source") {
-            sh "git fetch"
-            sh "git switch ${branchName}"
-            def tag = sh(returnStdout: true, script: "git rev-parse --short=8 HEAD").trim();
-            echo "Commit ID: ${tag}"
-        }
+        extRegistryQuayDC = "quay-registry.apps.proddc.customs.go.id"
+        extRegistryQuayDRC = "quay-registry.apps.proddrc.customs.go.id"
+        
+        projectName = "pentaho"
+        repoUrl = "gitlab.customs.go.id/sena.darodata/pentaho-bcare.git"
+        branchName = "master"
     }
 
+    stages {
+        stage ('Git Clone') {
+            steps {
+                sh "git config --global http.sslVerify false"
+                sh "rm -rf source"
+                withCredentials([usernamePassword(credentialsId: 'customs-gitlab-credential', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh "git clone https://${USERNAME}:${PASSWORD}@${repoUrl} source"
+                }
+            }
+        }
+        
+        stage ('App Build') {
+            steps {
+                dir("source") {
+                    sh "git fetch"
+                    sh "git switch ${branchName}"
+                    //sh "sleep 60"
+                }
+            }
+        }
 
-     stage ('App Push') {
-        dir("source") {
-            def tokenLocal = sh(script: 'oc whoami -t', returnStdout: true).trim()
-            
-            withCredentials([usernamePassword(credentialsId: 'quay-dc-credential', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]){
-                sh "skopeo copy docker://adhitia09/app-nginx:1.0 docker://${extRegistryQuayDC}/djbc/app-nginx:1.0 --dest-creds \${USERNAME}:\${PASSWORD} --dest-tls-verify=false"
+        stage ('Push Image to Quay') {
+            steps {
+                dir("source"){
+                    withCredentials([usernamePassword(credentialsId: 'quay-dc-credential', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]){
+                        sh "skopeo copy docker://senaturana/plato:latest docker://${extRegistryQuayDC}/djbc/plato:latest --dest-creds \${USERNAME}:\${PASSWORD} --dest-tls-verify=false"
+                    }
+                    withCredentials([usernamePassword(credentialsId: 'quay-drc-credential', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]){
+                        sh "skopeo copy docker://senaturana/plato:latest docker://${extRegistryQuayDRC}/djbc/plato:latest --dest-creds \${USERNAME}:\${PASSWORD} --dest-tls-verify=false"
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy to Dev') {
+            parallel {
+                stage('App Deploy to DEV DC OCP') {
+                    steps {
+                        dir("source") {
+                            sh "cp plato-deployment.yaml kubernetes-dc.yaml"
+                            sh "oc apply -f quayuser-djbc-dc-pull-secret.yaml -n ${projectName}"
+                            sh "sed 's,\\\$REGISTRY/\\\$HARBOR_NAMESPACE/\\\$APP_NAME:\\\$BUILD_NUMBER,${extRegistryQuayDC}/djbc/plato:latest,g' kubernetes-dc.yaml > kubernetes-dc-quay.yaml"
+                            sh "sed 's,\\\$IMAGEPULLSECRET,${pullImageDC},g' kubernetes-dc-quay.yaml > kubernetes-ocp-quay-dc.yaml"
+                            sh "oc apply -f kubernetes-ocp-quay-dc.yaml -n ${projectName}"
+                            sh "oc set triggers deployment/plato-deployment -c plato-deployment -n ${projectName} || true"
+                            sh "oc rollout restart deployment/plato-deployment -n ${projectName}"
+                        }
+                    }
+                }
+
+                stage('App Deploy to DEV DRC OCP') {
+                    steps {
+                        dir("source") {
+                            withCredentials([file(credentialsId: 'drc-dev-ocp', variable: 'KUBE_CONFIG_DEV_DRC')]) {
+                                sh "cp plato-deployment.yaml kubernetes-drc.yaml"
+                                sh "oc --kubeconfig=\$KUBE_CONFIG_DEV_DRC apply -f quayuser-djbc-drc-pull-secret.yaml -n ${projectName}"
+                                sh "sed 's,\\\$REGISTRY/\\\$HARBOR_NAMESPACE/\\\$APP_NAME:\\\$BUILD_NUMBER,${extRegistryQuayDRC}/djbc/plato:latest,g' kubernetes-drc.yaml > kubernetes-drc-quay.yaml"
+                                sh "sed 's,\\\$IMAGEPULLSECRET,${pullImageDRC},g' kubernetes-drc-quay.yaml > kubernetes-ocp-quay-drc.yaml"
+                                sh "oc --kubeconfig=\$KUBE_CONFIG_DEV_DRC apply -f kubernetes-ocp-quay-drc.yaml -n ${projectName}"
+                                sh "oc --kubeconfig=\$KUBE_CONFIG_DEV_DRC set triggers deployment/plato-deployment -c plato-deployment -n ${projectName} || true"
+                                sh "oc --kubeconfig=\$KUBE_CONFIG_DEV_DRC rollout restart deployment/plato-deployment -n ${projectName}"
+                            }
+                        }
+                    }
+                }
             }
         }
     }
- 
-
 }
-
