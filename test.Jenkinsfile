@@ -25,7 +25,7 @@ node('maven') {
 
      stage ('App Push') {
         dir("source") {
-            
+            def tokenLocal = sh(script: 'oc whoami -t', returnStdout: true).trim()
             withCredentials([usernamePassword(credentialsId: 'docker-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]){
                 sh "set +x"
                 sh "skopeo copy --remove-signatures --src-creds=jenkins:${tokenLocal} --src-tls-verify=false docker://senaturana/plato:latest docker://${extRegistryQuayDC}/djbc/${projectName}_${appName}-prod:latest --dest-creds \${USERNAME}:\${PASSWORD} --dest-tls-verify=false"
