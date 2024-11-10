@@ -29,8 +29,8 @@ node('maven') {
      stage ('App Push') {
         dir("source") {
             def tokenLocal = sh(script: 'oc whoami -t', returnStdout: true).trim()
-            withCredentials([usernamePassword(credentialsId: 'quay-drc-credential', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]){
-                sh "skopeo copy --remove-signatures --src-creds=jenkins:${tokenLocal} --src-tls-verify=false docker://adhitia09/app-nginx:1.0 docker://${extRegistryQuayDRC}/djbc/app-nginx:1.0 --dest-creds \${USERNAME}:\${PASSWORD} --dest-tls-verify=false"
+            withCredentials([usernamePassword(credentialsId: 'docker-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]){
+                sh "skopeo copy --remove-signatures --src-creds=jenkins:${tokenLocal} --src-tls-verify=false docker://adhitia09/app-nginx:1.0 --dest-creds \${USERNAME}:\${PASSWORD} --dest-tls-verify=false docker://${extRegistryQuayDRC}/djbc/app-nginx:1.0 --dest-creds \${USERNAME}:\${PASSWORD} --dest-tls-verify=false"
             }
         }
     }
