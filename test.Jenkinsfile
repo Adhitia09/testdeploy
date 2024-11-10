@@ -38,7 +38,7 @@ pipeline {
                 dir("source") {
                     script {
                         withCredentials([usernamePassword(credentialsId: 'docker-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]){
-                            sh "podman login docker.io"
+                            sh "oc login docker.io"
                         }
                         sh "sleep 60"
                         withCredentials([usernamePassword(credentialsId: 'quay-dc-credential', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]){
