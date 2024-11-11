@@ -27,9 +27,6 @@ node('maven') {
 
     stage ('App Push') {
         dir("source") {
-            withCredentials([usernamePassword(credentialsId: 'quay-dc-credential', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]){             	
-		        sh "skopeo copy docker://senaturana/plato:latest docker://${extRegistryQuayDC}/djbc/plato:latest --dest-creds \${USERNAME}:\${PASSWORD} --dest-tls-verify=false" 
-	        }    
 	        withCredentials([usernamePassword(credentialsId: 'quay-drc-credential', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]){          
 		        sh "skopeo copy docker://senaturana/plato:latest docker://${extRegistryQuayDRC}/djbc/plato:latest --dest-creds \${USERNAME}:\${PASSWORD} --dest-tls-verify=false"        
 	        }
