@@ -37,7 +37,7 @@ node('maven') {
         }
     }
  
-    stage('Deploy to Dev') {
+    	stage('Deploy to Dev') {
             "App Deploy to DEV DRC OCP": {
                 dir("source") {
                     withCredentials([file(credentialsId: 'drc-dev-ocp', variable: 'KUBE_CONFIG_DEV_DRC')]) {
@@ -51,5 +51,5 @@ node('maven') {
                     }
                 }
             }
-    }
+    	}
 }
